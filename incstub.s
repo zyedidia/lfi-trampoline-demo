@@ -4,3 +4,5 @@
 stub_start:
     .incbin "sandbox/libadd.elf"
 stub_end:
+
+.section .note.GNU-stack,"",@progbits
