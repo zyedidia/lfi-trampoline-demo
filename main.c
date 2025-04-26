@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
@@ -34,14 +35,12 @@ static void lfi_init(void) {
     char* args[] = {"stub", NULL};
     size_t size = (size_t)(stub_end - stub_start);
     struct TuxThread* p = lfi_tux_proc_new(tux, &stub_start[0], size, 1, &args[0]);
-    lfi_tux_ctx(p);
+    assert(p);
 
-    uint64_t r = lfi_tux_proc_run(p);
+    lfi_tux_proc_run(p);
 
-    // TODO: sanitize this pointer
-    void** sbx_funcs = (void**) r;
-    _funcs[0] = sbx_funcs[0];
-    _funcs[1] = sbx_funcs[1];
+    _funcs[0] = (void*) lfi_proc_sym(lfi_tux_ctx(p), "add");
+    _funcs[1] = (void*) lfi_proc_sym(lfi_tux_ctx(p), "_lfi_retfn");
 }
 
 int lfi_add(int, int);
