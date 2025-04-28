@@ -6,10 +6,13 @@
 #include "lfi.h"
 #include "lfi_tux.h"
 
-extern void* _funcs[];
-
 extern uint8_t stub_start[];
 extern uint8_t stub_end[];
+
+_Thread_local void* lfi_retfn;
+_Thread_local void* lfi_targetfn;
+
+static struct TuxThread* p;
 
 static void lfi_init(void) {
     struct LFIPlatform* plat = lfi_new_plat((struct LFIPlatOptions) {
@@ -34,16 +37,23 @@ static void lfi_init(void) {
 
     char* args[] = {"stub", NULL};
     size_t size = (size_t)(stub_end - stub_start);
-    struct TuxThread* p = lfi_tux_proc_new(tux, &stub_start[0], size, 1, &args[0]);
+    p = lfi_tux_proc_new(tux, &stub_start[0], size, 1, &args[0]);
     assert(p);
 
     lfi_tux_proc_run(p);
-
-    _funcs[0] = (void*) lfi_proc_sym(lfi_tux_ctx(p), "add");
-    _funcs[1] = (void*) lfi_proc_sym(lfi_tux_ctx(p), "_lfi_retfn");
 }
 
-int lfi_add(int, int);
+extern void lfi_trampoline();
+static const void* lfi_trampoline_addr = &lfi_trampoline;
+
+static int
+lfi_add(int a, int b)
+{
+    lfi_retfn = (void*) lfi_proc_sym(lfi_tux_ctx(p), "_lfi_retfn");
+    lfi_targetfn = (void*) lfi_proc_sym(lfi_tux_ctx(p), "add");
+    int (*trampoline)(int, int) = (int (*)(int, int)) lfi_trampoline_addr;
+    return trampoline(a, b);
+}
 
 int main() {
     lfi_init();

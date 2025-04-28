@@ -1,7 +1,7 @@
 .text
 
-.global lfi_add
-lfi_add:
+.global lfi_trampoline
+lfi_trampoline:
 	// save callee-saved registers
 	pushq %r15
 	pushq %r14
@@ -28,15 +28,15 @@ lfi_add:
 	// also write base to %gs
 	wrgsbase %r14
 
-	// load address of the _lfi_retfn function that will make the return rtcall
-	movq _lfi_retfn_addr@GOTPCREL(%rip), %r11
-	movq (%r11), %r11
+	// load address of the lfi_retfn function that will make the return rtcall
+	movq lfi_retfn@gottpoff(%rip), %r11
+	movq %fs:(%r11), %r11
 	// push this as the return address onto the user stack
 	pushq %r11
 
 	// load address of the add function
-	movq add_addr@GOTPCREL(%rip), %r11
-	movq (%r11), %r11
+	movq lfi_targetfn@gottpoff(%rip), %r11
+	movq %fs:(%r11), %r11
 	// apply mask just to be safe
 	andl $0xffffffe0, %r11d
 	addq %r14, %r11
@@ -44,16 +44,5 @@ lfi_add:
 	// this function should return via a runtime call
 	jmpq *%r11
 	int3
-
-.data
-
-.global _funcs
-_funcs:
-.global add_addr
-add_addr:
-	.quad 0
-.global _lfi_retfn_addr
-_lfi_retfn_addr:
-	.quad 0
 
 .section .note.GNU-stack,"",@progbits
