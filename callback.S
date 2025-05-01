@@ -25,7 +25,8 @@ lfi_callback:
 	// return back to sandbox
 
 	// This pop instruction could segfault if the sandbox has provided a bad stack.
-userpop:
+.global lfi_callback_userpop
+lfi_callback_userpop:
 	popq %r11
 	andl $0xffffffe0, %r11d
 	orq %r14, %r11
