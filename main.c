@@ -82,5 +82,7 @@ int main() {
 
     lfi_unregister_cb(cb);
 
+    lfi_tux_proc_free(p);
+
     return 0;
 }
