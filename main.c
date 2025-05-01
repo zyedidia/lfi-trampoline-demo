@@ -14,6 +14,10 @@ _Thread_local void* lfi_targetfn;
 
 static struct TuxThread* p;
 
+bool lfi_cbinit(struct LFIContext* ctx);
+void* lfi_register_cb(void* fn);
+void lfi_unregister_cb(void* fn);
+
 static void lfi_init(void) {
     struct LFIPlatform* plat = lfi_new_plat((struct LFIPlatOptions) {
         .pagesize = getpagesize(),
@@ -40,6 +44,12 @@ static void lfi_init(void) {
     p = lfi_tux_proc_new(tux, &stub_start[0], size, 1, &args[0]);
     assert(p);
 
+    bool ok = lfi_cbinit(lfi_tux_ctx(p));
+    if (!ok) {
+        fprintf(stderr, "error initializing callback entries\n");
+        exit(1);
+    }
+
     lfi_tux_proc_run(p);
 }
 
@@ -47,18 +57,30 @@ extern void lfi_trampoline();
 static const void* lfi_trampoline_addr = &lfi_trampoline;
 
 static int
-lfi_add(int a, int b)
+lfi_add(int (*cb)(void), int a, int b)
 {
     lfi_retfn = (void*) lfi_proc_sym(lfi_tux_ctx(p), "_lfi_retfn");
     lfi_targetfn = (void*) lfi_proc_sym(lfi_tux_ctx(p), "add");
-    int (*trampoline)(int, int) = (int (*)(int, int)) lfi_trampoline_addr;
-    return trampoline(a, b);
+    int (*trampoline)(int (*)(void), int, int) = (int (*)(int (*)(void), int, int)) lfi_trampoline_addr;
+    return trampoline(cb, a, b);
+}
+
+static int
+my_callback(void)
+{
+    printf("callback\n");
+    return 100;
 }
 
 int main() {
     lfi_init();
 
-    int result = lfi_add(10, 32);
+    void* cb = lfi_register_cb(my_callback);
+
+    int result = lfi_add(cb, 10, 32);
     printf("result: %d\n", result);
+
+    lfi_unregister_cb(cb);
+
     return 0;
 }
