@@ -1,35 +1,57 @@
+#define PROC_REGS 16
+
 .text
+
+.macro get_ctx
+  mov x11, x0
+  mov x9, x30
+  adrp x0, :tlsdesc:lfi_myctx
+  ldr x8, [x0, :tlsdesc_lo12:lfi_myctx]
+  add x0, x0, :tlsdesc_lo12:lfi_myctx
+  // this tls descriptor call must preserve all registers except x0
+  .tlsdesccall lfi_myctx
+  blr x8
+  mrs x8, tpidr_el0
+  ldr x8, [x8, x0]
+  mov x30, x9
+  mov x0, x11
+.endm
 
 .global lfi_callback
 lfi_callback:
-	// Entrypoint for callbacks. Callback target is in %r10.
-	movq lfi_myctx@gottpoff(%rip), %r11
-	movq %fs:(%r11), %r11
-	xchg 0(%r11), %rsp
-	pushq %r12              // save r12 to use as temp
-	movq 0(%r11), %r12      // move current sandbox stack pointer to r12
-	pushq 16(%r11)          // push old sandbox stack pointer to stack
-	movq %r12, 16(%r11)     // save current sandbox stack pointer
+  // x18 was used to branch here, reset it to a valid value
+  mov x18, x21
 
-	pushq %r11 // needed for stack alignment and preserving r11
-	callq *%r10
-	popq %r11
+  get_ctx
 
-	// restore %rsp
-	movq 16(%r11), %r10      // move current sandbox stack pointer to r10
-	popq 16(%r11)            // restore old sandbox stack pointer
-	popq %r12                // restore r12
-	movq %rsp, 0(%r11)       // make sure we don't clobber stack pointer
-	movq %r10, %rsp          // restore stack pointer
+  // get current user sp
+  mov x12, sp
+  // enable kernel sp
+  ldr x11, [x8]
+  mov sp, x11
+  // save previous user sp and return address to stack
+  ldr x11, [x8, PROC_REGS+16*15+8]
+  stp x11, x30, [sp, #-16]!
+  // save current user sp to ctx
+  str x12, [x8, PROC_REGS+16*15+8]
+  mov x22, x8
 
-	// return back to sandbox
+  blr x16
 
-	// This pop instruction could segfault if the sandbox has provided a bad stack.
-.global lfi_callback_userpop
-lfi_callback_userpop:
-	popq %r11
-	andl $0xffffffe0, %r11d
-	orq %r14, %r11
-	jmpq *%r11
+  // read previous user sp and return address from stack
+  mov x8, x22
+  ldp x11, x30, [sp], 16
+  // read current user sp from ctx
+  ldr x12, [x8, PROC_REGS+16*15+8]
+  // restore previous user sp in ctx
+  str x11, [x8, PROC_REGS+16*15+8]
+  // make sure we don't clobber the kernel stack pointer
+  mov x11, sp
+  str x11, [x8]
+  // restore sp to current user sp
+  mov sp, x12
+
+  add x30, x21, w30, uxtw
+  ret
 
 .section .note.GNU-stack,"",@progbits

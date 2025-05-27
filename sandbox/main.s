@@ -1,12 +1,12 @@
 .text
 
-.p2align 5
+.p2align 4
 .global main
 main:
-	mov $60, %rax
-	syscall
+	mov x8, #94
+	svc #0
 
-.p2align 5
+.p2align 4
 .global _lfi_retfn
 _lfi_retfn:
 	//lfi:rtcall_return
