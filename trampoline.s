@@ -14,10 +14,12 @@ lfi_trampoline:
 	movq lfi_myctx@gottpoff(%rip), %r11
 	movq %fs:(%r11), %r11
 
-	// dummy push to keep the stack aligned
-	pushq %rbp
 	// push lfi_myctx->regs.rsp
 	pushq 16(%r11)
+
+	// push the trampoline return onto the host stack
+	leaq .return(%rip), %r14
+	pushq %r14
 
 	// save current stack to lfi_myctx->kstackp
 	movq %rsp, 0(%r11)
@@ -44,6 +46,15 @@ lfi_trampoline:
 
 	// this function should return via a runtime call
 	jmpq *%r11
-	int3
+.return:
+	popq %rbp
+	movq %rbp, 16(%r11)
+	popq %rbp
+	popq %rbx
+	popq %r12
+	popq %r13
+	popq %r14
+	popq %r15
+	ret
 
 .section .note.GNU-stack,"",@progbits
