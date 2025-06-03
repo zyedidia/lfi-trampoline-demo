@@ -1,3 +1,5 @@
+#define PROC_REGS 32
+
 .text
 
 .global lfi_trampoline
@@ -15,7 +17,7 @@ lfi_trampoline:
 	movq %fs:(%r11), %r11
 
 	// push lfi_myctx->regs.rsp
-	pushq 16(%r11)
+	pushq PROC_REGS(%r11)
 
 	// push the trampoline return onto the host stack
 	leaq .return(%rip), %r14
@@ -24,9 +26,9 @@ lfi_trampoline:
 	// save current stack to lfi_myctx->kstackp
 	movq %rsp, 0(%r11)
 	// load rsp from lfi_myctx->regs.rsp
-	movq 16(%r11), %rsp
+	movq PROC_REGS(%r11), %rsp
 	// load r14 (base address) from lfi_myctx->regs.r14
-	movq 16+14*8(%r11), %r14
+	movq PROC_REGS+14*8(%r11), %r14
 	// also write base to %gs
 	wrgsbase %r14
 
@@ -48,7 +50,7 @@ lfi_trampoline:
 	jmpq *%r11
 .return:
 	popq %rbp
-	movq %rbp, 16(%r11)
+	movq %rbp, PROC_REGS(%r11)
 	popq %rbp
 	popq %rbx
 	popq %r12

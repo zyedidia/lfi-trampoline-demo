@@ -63,5 +63,5 @@ make
 ```
 
 This will build the sandboxed function in `sandbox/libadd.elf`, as well as the
-code in `main.c` that initializes LFI and the trampoline in `trampoline.s`. The
+code in `main.c` that initializes LFI and the trampoline in `trampoline.S`. The
 `sandbox/libadd.elf` is embedded into the final binary via `incstub.s`.
