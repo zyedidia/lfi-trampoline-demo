@@ -51,6 +51,10 @@ static void lfi_init(void) {
     }
 
     lfi_tux_proc_run(p);
+
+    uintptr_t sbx_base = lfi_as_info(lfi_ctx_as(lfi_tux_ctx(p))).base;
+    uintptr_t sbx_stack = lfi_tux_proc_stack(p);
+    printf("heap: %p, stack: %p\n", (void*)sbx_base, (void*) sbx_stack);
 }
 
 extern void lfi_trampoline();
