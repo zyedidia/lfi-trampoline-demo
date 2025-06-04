@@ -84,7 +84,7 @@ int main() {
     int result = lfi_add(cb, 10, 32);
     printf("result: %d\n", result);
 
-    lfi_unregister_cb(cb);
+    lfi_unregister_cb(my_callback);
 
     lfi_tux_proc_free(p);
 
