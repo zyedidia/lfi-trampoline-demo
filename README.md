@@ -5,7 +5,7 @@ This is a demo that shows manual invocation of a function inside an LFI sandbox.
 # Toolchain Setup
 
 Install the LFI x86-64 toolchain. A prebuilt toolchain is available online:
-https://github.com/zyedidia/lfi/releases/tag/v0.6.
+https://github.com/zyedidia/lfi/releases/tag/v0.7.
 
 To build a toolchain manually, first install the LFI tools
 
