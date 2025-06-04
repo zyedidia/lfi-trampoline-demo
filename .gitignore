@@ -1,2 +1,5 @@
 main
 sandbox/libadd.elf
+lfi-clang
+lfi-clang.tar.gz
+.vscode/settings.json
