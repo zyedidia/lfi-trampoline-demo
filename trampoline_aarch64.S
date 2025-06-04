@@ -1,4 +1,4 @@
-#define PROC_REGS 32
+#define PROC_REGS 16
 #define REG_BASE x21
 
 .text
