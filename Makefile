@@ -18,8 +18,9 @@ lfi-clang.tar.gz:
 	fi
 
 lfi-clang: lfi-clang.tar.gz
-	mkdir -p $@
-	tar -zxf $< -C $@ --strip-components=1
+	@if [ ! -e "$@" ]; then \
+		mkdir -p $@ && tar -zxf $< -C $@ --strip-components=1; \
+	fi
 
 lfi:
 	git clone git@github.com:zyedidia/lfi || git clone https://github.com/zyedidia/lfi
