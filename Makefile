@@ -24,5 +24,6 @@ lfi-clang: lfi-clang.tar.gz
 
 lfi:
 	git clone git@github.com:zyedidia/lfi || git clone https://github.com/zyedidia/lfi
+	cd lfi && git checkout update-lfi-ret
 	cd lfi && meson setup build-liblfi -Dliblfi-only=true
 	cd lfi/build-liblfi && ninja
